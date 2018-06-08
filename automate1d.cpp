@@ -29,12 +29,12 @@ std::string NumToNumBit(short unsigned int num) {
     return numeroBit;
 }
 
-Automate1D::Automate1D(unsigned short int num):numero(num),numeroBit(NumToNumBit(num)){
-  Automate(1);
+Automate1D::Automate1D(unsigned short int num):Automate(1),numero(num),numeroBit(NumToNumBit(num)){
+
 }
 
-Automate1D::Automate1D(const std::string& num) :numero(NumBitToNum(num)),numeroBit(num) {
-  Automate(1);
+Automate1D::Automate1D(const std::string& num) :Automate(1),numero(NumBitToNum(num)),numeroBit(num) {
+
 }
 
 
