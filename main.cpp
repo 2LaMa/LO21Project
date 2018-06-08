@@ -7,12 +7,16 @@
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
-
-    //QPushButton *quit = new QPushButton("quitter",&fenetre);
-    //quit -> move(100,150);
-    //AutoCell fenetre;
-
-    //fenetre mafenetre;
+    Etat etat(1,20,1);
+    etat.setCellule(10,1);
+    AutomateElementaire a(170);
+    Etat temp;
+    for(int i = 0; i < 50; i++)
+    {
+        std::cout<<etat<<"\n";
+        a.appliquerTransition(etat,temp);
+        etat = temp;
+    }
     AutoCell mafenetre;
     mafenetre.show();
     return app.exec();
