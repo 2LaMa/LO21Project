@@ -1,48 +1,41 @@
 #include "automate.h"
 
 
-Etat::Etat(unsigned int n):
-    dimension(n),
-    valeur(new bool [n]) {
-    for (unsigned int i = 0; i < n; i++) valeur[i] = false;
-}
-
-void Etat::setCellule(unsigned int i, bool val) {
-    if (i >= dimension) throw AutomateException("Erreur Cellule");
+void Etat::setCellule(unsigned int i, unsigned int val) {
+    if (i >= valeur.size()) throw AutomateException("Erreur Cellule");
     valeur[i] = val;
 }
 
-bool Etat::getCellule(unsigned int i) const {
-    if (i >= dimension) throw AutomateException("Erreur Cellule");
+unsigned int Etat::getCellule(unsigned int i) const {
+    if (i >= valeur.size()) throw AutomateException("Erreur Cellule");
     return valeur[i];
 }
 
-Etat::Etat(const Etat& e):
-    dimension(e.dimension),
-    valeur(new bool[e.dimension])
+void Etat::setCellule(unsigned int i, unsigned int j, unsigned int val)
 {
-    for (unsigned int i = 0; i < dimension; i++) valeur[i] = e.valeur[i];
+    this->setCellule(j*taille+i,val);
+}
+
+unsigned int Etat::getCellule(unsigned int i, unsigned int j) const
+{
+    return this->getCellule(i*taille+j);
 }
 
 std::ostream& operator<<(std::ostream& f, const Etat& e) {
-    for (unsigned int i = 0; i < e.getDimension(); i++)
-        if (e.getCellule(i)) f << char(178); else f << " ";
+    if(e.getDim() == 1)
+    {
+        for (unsigned int i = 0; i < e.getTaille(); i++)
+            f << e.getCellule(i) << " ";
+    }
+    else
+    { for (unsigned int i = 0; i < e.getTaille(); i++)
+        {for (unsigned int j = 0; j < e.getTaille(); j++)
+            f << e.getCellule(i,j) << " ";
+        f<<"\n";}
+    }
     return f;
 }
 
-Etat& Etat::operator=(const Etat& e) {
-    if (this != &e) {
-        if (dimension != e.dimension) {
-            bool* newvaleur = new bool[e.dimension];
-            for (unsigned int i = 0; i < e.dimension; i++) newvaleur[i] = e.valeur[i];
-            bool* old = valeur;
-            valeur = newvaleur;
-            dimension = e.dimension;
-            delete[] old;
-        }else for (unsigned int i = 0; i < e.dimension; i++) valeur[i] = e.valeur[i];
-    }
-    return *this;
-}
 
 short unsigned int NumBitToNum(const std::string& num) {
     if (num.size() != 8) throw AutomateException("Numero d'automate indefini");
@@ -73,102 +66,73 @@ std::string NumToNumBit(short unsigned int num) {
     return numeroBit;
 }
 
-Automate::Automate(unsigned short int num):numero(num),numeroBit(NumToNumBit(num)){
+//AutomateElem::AutomateElem(unsigned short int num):numero(num),numeroBit(NumToNumBit(num)){}
+
+//AutomateElem::AutomateElem(const std::string& num) :numero(NumBitToNum(num)),numeroBit(num) {}
+
+
+unsigned int baseNtoBase10(std::vector<unsigned int> nb, unsigned int base)
+{
+    unsigned int resultat = 0;
+    if(base == 0) throw AutomateException("base 0");
+    for(unsigned int i = 0; i < nb.size(); i++)
+    {
+        resultat += nb[nb.size()-i-1]*pow(base,i);
+    }
+    return resultat;
 }
 
-Automate::Automate(const std::string& num) :numero(NumBitToNum(num)),numeroBit(num) {
+std::vector<unsigned int> base10toBaseN(unsigned int nb, unsigned int base)
+{
+    std::vector<unsigned int> resultat;
+    while(nb > 0)
+    {
+        resultat.insert(resultat.begin(),nb%base);
+        nb = (unsigned int) nb/base;
+    }
+    return resultat;
 }
 
 
+unsigned int indexTorique(int index,unsigned int tailleTab)
+{
+    while(index < 0) index += tailleTab;
+    return index%tailleTab;
+}
 
-void Automate::appliquerTransition(const Etat& dep, Etat& dest) const {
-    if (dep.getDimension() != dest.getDimension()) dest = dep;
-    for (unsigned int i = 0; i < dep.getDimension(); i++) {
-        unsigned short int conf=0;
-        if (i > 0) conf+=dep.getCellule(i - 1) * 4;
-        conf+=dep.getCellule(i)*2;
-        if (i < dep.getDimension()-1) conf+=dep.getCellule(i + 1);
-        dest.setCellule(i, numeroBit[7-conf]-'0');
+void Automate1D::appliquerTransition(const Etat& dep, Etat& dest) const {
+    if(&dep == &dest) throw AutomateException("AppliquerTransition1D : dep et dest egaux");
+    if(dep.getDim() != 1) throw AutomateException("AppliquerTransition1D sur un etat2D");
+    if (dep.getTaille() != dest.getTaille() || dep.getDim() != dest.getDim()) dest = dep;
+    std::vector<unsigned int> conf(voisinage.size());
+    for (unsigned int abscisse = 0; abscisse < dep.getTaille(); abscisse++) {
+        for(unsigned int indexVoisin = 0; indexVoisin < voisinage.size(); indexVoisin++)
+            conf[indexVoisin] = dep.getCellule(indexTorique(abscisse + voisinage[indexVoisin],dep.getTaille()));
+        dest.setCellule(abscisse, regle[baseNtoBase10(conf,dep.getValMax()+1)]);
     }
 }
 
-std::ostream& operator<<(std::ostream& f, const Automate& A) {
-    f << A.getNumero() << " : " << A.getNumeroBit() << "\n";
-    return f;
+
+void Automate2D::appliquerTransition(const Etat& dep, Etat& dest) const {
+    unsigned int segment;
+    unsigned int abscisseDest;
+    unsigned int ordonneeDest;
+    
+    if(&dep == &dest) throw AutomateException("AppliquerTransition : dep et dest egaux");
+    if (dep.getTaille() != dest.getTaille() || dep.getDim() != dest.getDim()) dest = dep;
+    std::vector<unsigned int> conf(voisinage.size()); //stocke l'état du voisinage pour une cellule 
+    for (unsigned int abscisse = 0; abscisse < dep.size(); abscisse++) {
+        for(unsigned int indexVoisin = 0; indexVoisin < voisinage.size(); indexVoisin++)
+        {
+            segment = abscisse/dep.getTaille();
+            abscisseDest = indexTorique(abscisse%dep.getTaille()+voisinage[indexVoisin][0],dep.getTaille());
+            ordonneeDest =  indexTorique(segment+voisinage[indexVoisin][1], dep.getTaille());
+            //indexDest = ordonneeDest*dep.getTaille()+abscisseDest;
+            conf[indexVoisin] = dep.getCellule(abscisseDest,ordonneeDest);            
+        }
+        dest.setCellule(abscisse, regle[baseNtoBase10(conf,dep.getValMax()+1)]);
+    }
 }
 
-Simulateur::Simulateur(const Automate& a, unsigned int buffer):
-    automate(a), etats(nullptr), depart(nullptr), nbMaxEtats(buffer),rang(0) {
-    etats = new Etat*[nbMaxEtats];
-    for (unsigned int i = 0; i < nbMaxEtats; i++) etats[i] = nullptr;
-}
-Simulateur::Simulateur(const Automate& a, const Etat& dep, unsigned int buffer):
-    automate(a), etats(nullptr), depart(&dep), nbMaxEtats(buffer),rang(0) {
-    etats = new Etat*[nbMaxEtats];
-    for (unsigned int i = 0; i < nbMaxEtats; i++) etats[i] = nullptr;
-    etats[0] = new Etat(dep);
-}
+//std::vector<unsigned int> getRegleFromNum(short unsigned int num)
 
-void Simulateur::build(unsigned int cellule) {
-    if (cellule >= nbMaxEtats) throw AutomateException("erreur taille buffer");
-    if (etats[cellule] == nullptr) etats[cellule] = new Etat;
-}
-
-void Simulateur::setEtatDepart(const Etat& e) {
-    depart = &e;
-    reset();
-}
-
-void Simulateur::reset() {
-    if (depart==nullptr) throw AutomateException("etat depart indefini");
-    build(0); *etats[0] = *depart;
-    rang = 0;
-}
-
-void Simulateur::next() {
-    if (depart == nullptr) throw AutomateException("etat depart indefini");
-    rang++;
-    build(rang%nbMaxEtats);
-    automate.appliquerTransition(*etats[(rang - 1) % nbMaxEtats], *etats[rang%nbMaxEtats]);
-}
-
-void Simulateur::run(unsigned int nb_steps) {
-    for (unsigned int i = 0; i < nb_steps; i++) next();
-}
-
-const Etat& Simulateur::dernier() const {
-    return *etats[rang%nbMaxEtats];
-}
-
-Simulateur::~Simulateur() {
-    for (unsigned int i = 0; i < nbMaxEtats; i++) delete etats[i];
-    delete[] etats;
-}
-
-AutomateManager::AutomateManager() {
-    for (unsigned int i = 0; i < 256; i++) automates[i] = nullptr;
-}
-
-AutomateManager::~AutomateManager() {
-    for (unsigned int i = 0; i < 256; i++) delete automates[i];
-}
-
-AutomateManager::Handler AutomateManager::handler = Handler();
-
-AutomateManager& AutomateManager::getAutomateManager() {
-    if (!handler.instance) handler.instance = new AutomateManager;
-    return *handler.instance;
-}
-
-void AutomateManager::libererAutomateManager() {
-    delete handler.instance;
-    handler.instance = nullptr;
-}
-
-const Automate& AutomateManager::getAutomate(unsigned short int num) {
-    if (!automates[num]) automates[num] = new Automate(num);
-    return *automates[num];
-}
-const Automate& AutomateManager::getAutomate(const std::string& numBit) {
-    return getAutomate(NumBitToNum(numBit));
-}
