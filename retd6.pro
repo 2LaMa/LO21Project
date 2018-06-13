@@ -6,12 +6,10 @@ CONFIG += console
 
 SOURCES += \
     automate.cpp \
-    fenetre.cpp \
     main.cpp \
 
 
 HEADERS += \
     automate.h \
-    fenetre.h \
 
 

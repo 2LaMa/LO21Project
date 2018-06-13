@@ -1,7 +1,6 @@
 #include <QApplication>
 #include <QPushButton>
  #include <QLabel>
-#include <fenetre.h>
 //#include<autocell.h>
 #include<automate.h>
 

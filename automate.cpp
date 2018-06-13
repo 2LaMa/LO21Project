@@ -135,4 +135,3 @@ void Automate2D::appliquerTransition(const Etat& dep, Etat& dest) const {
 }
 
 //std::vector<unsigned int> getRegleFromNum(short unsigned int num)
-
