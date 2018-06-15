@@ -1,10 +1,5 @@
 #include"simulateur.h"
-Simulateur(const Automate& a, unsigned int buffer);
-Simulateur(const Automate& a, const Etat& dep, unsigned int buffer);
-void run(unsigned int nbSteps); // génère les n prochains états
-void next(); // génère le prochain état
-void reset(); // revenir à l'état de départ
-~Simulateur();
+
 
 Simulateur::Simulateur(const Automate& a, unsigned int buffer):
     automate(a), depart(nullptr), nbEtats(buffer),rang(0),etats(buffer) {

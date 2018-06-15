@@ -10,6 +10,7 @@ class Simulateur{
   unsigned int nbEtats;
   unsigned int rang;
   std::vector<Etat*> etats;
+  void build(unsigned int c);
   Simulateur(const Simulateur& s);
   Simulateur& operator=(const Simulateur& s);
 public:
