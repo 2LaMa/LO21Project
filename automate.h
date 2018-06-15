@@ -67,13 +67,13 @@ std::string NumToNumBit(short unsigned int num);
 
 class Automate2D : public Automate
 {
-    std::vector<std::vector<int>> voisinage;
+    std::vector<std::vector<int> > voisinage;
     static const int dimension = 2;
 public:
     Automate2D(std::vector<std::vector<int>> voisinage, std::vector<unsigned int> regle):Automate(regle),voisinage(voisinage){}
     void appliquerTransition(const Etat& dep, Etat& dest) const final;
-    
-    
+
+
 };
 
 class AutomateElementaire : public Automate1D
@@ -91,7 +91,7 @@ public:
 };
 
 class JeuDeLaVie : public Automate2D
-{   
+{
     static std::vector<std::vector<int>> getVoisinage()
     {
         auto resultat = std::vector<std::vector<int>>(9,std::vector<int>(2));
@@ -132,7 +132,7 @@ class JeuDeLaVie : public Automate2D
     }
 public:
     JeuDeLaVie():Automate2D(JeuDeLaVie::getVoisinage(), JeuDeLaVie::regleTrans()){}
-    
+
 
 };
 
