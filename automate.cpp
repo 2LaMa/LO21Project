@@ -1,4 +1,10 @@
-#include "automate.h"
+
+#include<automate.h>
+
+
+
+
+#include<bas_droite.h>
 
 
 void Etat::setCellule(unsigned int i, unsigned int val) {
@@ -100,38 +106,9 @@ unsigned int indexTorique(int index,unsigned int tailleTab)
     return index%tailleTab;
 }
 
-void Automate1D::appliquerTransition(const Etat& dep, Etat& dest) const {
-    if(&dep == &dest) throw AutomateException("AppliquerTransition1D : dep et dest egaux");
-    if(dep.getDim() != 1) throw AutomateException("AppliquerTransition1D sur un etat2D");
-    if (dep.getTaille() != dest.getTaille() || dep.getDim() != dest.getDim()) dest = dep;
-    std::vector<unsigned int> conf(voisinage.size());
-    for (unsigned int abscisse = 0; abscisse < dep.getTaille(); abscisse++) {
-        for(unsigned int indexVoisin = 0; indexVoisin < voisinage.size(); indexVoisin++)
-            conf[indexVoisin] = dep.getCellule(indexTorique(abscisse + voisinage[indexVoisin],dep.getTaille()));
-        dest.setCellule(abscisse, regle[baseNtoBase10(conf,dep.getValMax()+1)]);
-    }
-}
 
 
-void Automate2D::appliquerTransition(const Etat& dep, Etat& dest) const {
-    unsigned int segment;
-    unsigned int abscisseDest;
-    unsigned int ordonneeDest;
-    
-    if(&dep == &dest) throw AutomateException("AppliquerTransition : dep et dest egaux");
-    if (dep.getTaille() != dest.getTaille() || dep.getDim() != dest.getDim()) dest = dep;
-    std::vector<unsigned int> conf(voisinage.size()); //stocke l'état du voisinage pour une cellule 
-    for (unsigned int abscisse = 0; abscisse < dep.size(); abscisse++) {
-        for(unsigned int indexVoisin = 0; indexVoisin < voisinage.size(); indexVoisin++)
-        {
-            segment = abscisse/dep.getTaille();
-            abscisseDest = indexTorique(abscisse%dep.getTaille()+voisinage[indexVoisin][0],dep.getTaille());
-            ordonneeDest =  indexTorique(segment+voisinage[indexVoisin][1], dep.getTaille());
-            //indexDest = ordonneeDest*dep.getTaille()+abscisseDest;
-            conf[indexVoisin] = dep.getCellule(abscisseDest,ordonneeDest);            
-        }
-        dest.setCellule(abscisse, regle[baseNtoBase10(conf,dep.getValMax()+1)]);
-    }
-}
+
+
 
 //std::vector<unsigned int> getRegleFromNum(short unsigned int num)
